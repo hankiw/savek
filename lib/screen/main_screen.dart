@@ -43,82 +43,113 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _showBottomSheet() {
-    final _controller = TextEditingController();
+    final _inputController = TextEditingController();
+    DateTime? _selectedDate;
+    String? _selectedDateText;
 
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20))
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 20.0,
-          right: 20.0,
-          top: 20.0,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('add memo', style: TextStyle(fontSize: 10.0, fontWeight: FontWeight.bold)),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              maxLines: null,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20.0,
+              left: 20.0,
+              right: 20.0,
+              top: 20.0,
             ),
-            SizedBox(height: 10.0),
-            ElevatedButton(
-              onPressed: () async {
-                final content = _controller.text.trim();
-                if (content.isNotEmpty) {
-                  await DBHelper.insertNote(Note(content: content));
-                  Navigator.of(context).pop();
-                  _loadNotes();
-                }
-              },
-              child: Text('save'),
+            child: Wrap(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40.0,
+                        height: 4.0,
+                        margin: EdgeInsets.only(bottom: 20.0),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[400],
+                          borderRadius: BorderRadius.circular(2),
+                        )
+                      ),
+                    ),
+                    Text('new memo', style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 10.0),
+                    TextField(
+                      controller: _inputController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: '....',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      )
+                    ),
+                    SizedBox(height: 10.0),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          side: BorderSide(color: Colors.grey)
+                        ),
+                      ),
+                      icon: Icon(Icons.calendar_today, color: Colors.blueAccent),
+                      label: Text(
+                        (_selectedDate == null) ? '날짜를 선택하세요.' : _selectedDateText.toString(),
+                        style: TextStyle(color: Colors.blueAccent),
+                      ),
+                      onPressed: () async {
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: now,
+                          firstDate: DateTime(now.year, now.month - 1),
+                          lastDate: DateTime(now.year, now.month, now.day),
+                        );
+
+                        if (picked != null) {
+                          setState(() {
+                            _selectedDate = picked;
+                            _selectedDateText = _selectedDate.toString().substring(0, 10);
+                          });
+                        }
+                      },
+                    ),
+                    SizedBox(height: 20.0),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        padding: EdgeInsets.symmetric(vertical: 14.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0)
+                        ),
+                      ),
+                      onPressed: () async {
+                        if (_inputController.text.trim().isEmpty) return;
+
+                        final newNote = Note(content: _inputController.text.trim());
+                        await DBHelper.insertNote(newNote);
+                        _controller.clear();
+                        Navigator.pop(context);
+                        _loadNotes();
+                      },
+                      child: Text('SAVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18.0)),
+                    ),
+                    SizedBox(height: 10.0),
+                  ],
+                )
+              ],
             ),
-            SizedBox(height: 10.0),
-          ]
-        ),
-      )
-    );
-  }
-
-  // 미사용 (input dialog 띄우기)
-  void _showAddNoteDialog() {
-    final _dialogController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('add memo'),
-        content: TextField(
-          controller: _dialogController,
-          autofocus: true,
-          decoration: InputDecoration(hintText: 'memo'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('cancel'),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final content = _dialogController.text.trim();
-              if (content.isNotEmpty) {
-                await DBHelper.insertNote(Note(content: content));
-                Navigator.of(context).pop();
-                _loadNotes();
-              }
-            },
-            child: Text('save'),
-          )
-        ]
-      )
+        );
+      }
     );
   }
   
@@ -126,46 +157,48 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('test note')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(hintText: 'input memo')
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(hintText: 'input memo')
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: () {
-                    debugPrint('check1');
-                    _addNote();
-                  }
-                )
-              ],
-            )
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _notes.length,
-              itemBuilder: (context, i) {
-                return ListTile(
-                  title: Text(_notes[i].content),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
+                  IconButton(
+                    icon: Icon(Icons.add),
                     onPressed: () {
-                      debugPrint('check222');
-                      _deleteNote(_notes[i].id!);
+                      debugPrint('check1');
+                      _addNote();
                     }
-                  ),
-                );
-              }
+                  )
+                ],
+              )
             ),
-          )
-        ],
+            Expanded(
+              child: ListView.builder(
+                itemCount: _notes.length,
+                itemBuilder: (context, i) {
+                  return ListTile(
+                    title: Text(_notes[i].content),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        debugPrint('check222');
+                        _deleteNote(_notes[i].id!);
+                      }
+                    ),
+                  );
+                }
+              ),
+            )
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showBottomSheet,
