@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:savek/db/db_helper.dart';
-import 'package:savek/model/note.dart';
+import 'package:savek/model/memo.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -11,41 +12,27 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   final _controller = TextEditingController();
-  List<Note> _notes = [];
+  List<Memo> _memoList = [];
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    
-    _loadNotes();
+
+		_loadMemo();
   }
 
-  void _loadNotes() async {
-    final notes = await DBHelper.fetchNotes();
-    setState(() {
-      _notes = notes;
-    });
-  }
-
-  void _addNote() async {
-    if (_controller.text.trim().isEmpty) return;
-
-    final newNote = Note(content: _controller.text.trim());
-    await DBHelper.insertNote(newNote);
-    _controller.clear();
-    _loadNotes();
-  }
-
-  void _deleteNote(int id) async {
-    await DBHelper.deleteNote(id);
-    _loadNotes();
-  }
+	void _loadMemo() async {
+		final memoList = await DBHelper.loadMemo();
+		setState(() {
+			_memoList = memoList;
+		});
+	}
 
   void _showBottomSheet() {
-    final _inputController = TextEditingController();
-    DateTime? _selectedDate;
-    String? _selectedDateText;
+    final _amount = TextEditingController();
+		final _content = TextEditingController();
+    String _selectedDate = '';
 
     showModalBottomSheet(
       backgroundColor: Colors.white,
@@ -81,18 +68,7 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                     Text('new memo', style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10.0),
-                    TextField(
-                      controller: _inputController,
-                      minLines: 2,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: '....',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                      )
-                    ),
-                    SizedBox(height: 10.0),
-                    TextButton.icon(
+										TextButton.icon(
                       style: TextButton.styleFrom(
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
@@ -102,7 +78,7 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                       icon: Icon(Icons.calendar_today, color: Colors.blueAccent),
                       label: Text(
-                        (_selectedDate == null) ? '날짜를 선택하세요.' : _selectedDateText.toString(),
+                        (_selectedDate == '') ? '날짜를 선택하세요.' : _selectedDate,
                         style: TextStyle(color: Colors.blueAccent),
                       ),
                       onPressed: () async {
@@ -116,11 +92,32 @@ class _MainScreenState extends State<MainScreen> {
 
                         if (picked != null) {
                           setState(() {
-                            _selectedDate = picked;
-                            _selectedDateText = _selectedDate.toString().substring(0, 10);
+                            _selectedDate = picked.toString().substring(0, 10);
+														debugPrint(_selectedDate);
                           });
                         }
                       },
+                    ),
+										SizedBox(height: 10.0),
+										TextField(
+											controller: _amount,
+											keyboardType: TextInputType.number,
+											decoration: InputDecoration(
+                        hintText: '금액',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      )
+										),
+										SizedBox(height: 10.0),
+                    TextField(
+                      controller: _content,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: '내용을 입력하세요.',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      )
                     ),
                     SizedBox(height: 20.0),
                     ElevatedButton(
@@ -132,13 +129,10 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       ),
                       onPressed: () async {
-                        if (_inputController.text.trim().isEmpty) return;
-
-                        final newNote = Note(content: _inputController.text.trim());
-                        await DBHelper.insertNote(newNote);
-                        _controller.clear();
-                        Navigator.pop(context);
-                        _loadNotes();
+                        if (_selectedDate != '' && _amount.text.isNotEmpty && _content.text.isNotEmpty) {
+													await DBHelper.insertMemo(Memo(date: _selectedDate, amount: int.parse(_amount.text), content: _content.text));
+												}
+												Navigator.pop(context);
                       },
                       child: Text('SAVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18.0)),
                     ),
@@ -174,7 +168,6 @@ class _MainScreenState extends State<MainScreen> {
                     icon: Icon(Icons.add),
                     onPressed: () {
                       debugPrint('check1');
-                      _addNote();
                     }
                   )
                 ],
@@ -182,15 +175,15 @@ class _MainScreenState extends State<MainScreen> {
             ),
             Expanded(
               child: ListView.builder(
-                itemCount: _notes.length,
+                itemCount: _memoList.length,
                 itemBuilder: (context, i) {
                   return ListTile(
-                    title: Text(_notes[i].content),
+                    title: Text('\u20A9 ${NumberFormat('#,###').format(_memoList[i].amount)} , ${_memoList[i].content}'),
+										subtitle: Text(_memoList[i].date),
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () {
                         debugPrint('check222');
-                        _deleteNote(_notes[i].id!);
                       }
                     ),
                   );

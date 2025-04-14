@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:savek/screen/main_screen.dart';
+import 'package:savek/screen/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,9 +15,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        // colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
       ),
-      home: MainScreen(),
+			routes: {
+				'/splash': (context) => const SplashScreen(),
+				'/main': (context) => const MainScreen(),
+			},
+			initialRoute: '/main'
     );
   }
 }
