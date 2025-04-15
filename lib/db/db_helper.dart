@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:savek/model/memo.dart';
 import 'package:sqflite/sqflite.dart';
@@ -26,12 +27,13 @@ class DBHelper {
     return await db.insert('memo', memo.toMap());
   }
 
-  static Future<List<Memo>> loadMemo() async {
+  static Future<List<Memo>> loadMemo(String searchYM) async {
+    
     final db = await database();
     final List<Map<String, dynamic>> maps = await db.query(
       'memo',
-      // where: 'date LIKE ?',
-      // whereArgs: ['${saveYM}%'],
+      where: 'date LIKE ?',
+      whereArgs: ['${searchYM}%'],
       orderBy: 'date DESC'
     );
     return List.generate(

@@ -17,7 +17,7 @@ class MainHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('lorem ipsum 2', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('lorem ipsum', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold, color: Colors.white)),
               Text('dolor sit amet', style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold, color: Colors.white)),
             ],
           ),

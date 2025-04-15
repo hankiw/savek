@@ -14,7 +14,8 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
 
   // memo data
-  String _saveYM = '2025-04';
+  DateTime _saveDateTime = DateTime.now();
+  String _saveYM = '';
   List<Memo> _memoList = [];
 
   // summary
@@ -26,12 +27,27 @@ class _MainScreenState extends State<MainScreen> {
     // TODO: implement initState
     super.initState();
 
-		_loadMemo();
+    _init();
   }
 
-	void _loadMemo() async {
+  void _init() async {
+    final saveYM = DateFormat('yyyy-MM').format(_saveDateTime);
+
+    _loadMemo(saveYM);
+
+    setState(() {
+      _saveYM = saveYM;
+    });
+  }
+
+	void _loadMemo([String searchYM = '']) async {
+    if (searchYM == '') {
+      final now = DateTime.now();
+      searchYM = DateFormat('yyyy-MM').format(now);
+    }
+
+		final memoList = await DBHelper.loadMemo(searchYM);
     int sumAmount = 0;
-		final memoList = await DBHelper.loadMemo();
 
     List.generate(
       memoList.length,
@@ -167,7 +183,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(title: Text('test note')),
       backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: Column(
@@ -190,7 +205,50 @@ class _MainScreenState extends State<MainScreen> {
               alignment: Alignment.centerLeft,
               child: Row(
                 children: [
-                  Text('${_saveYM} lorem ipsum', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0, color: Colors.black))
+                  Expanded(
+                    child: Text('${_saveYM} lorem ipsum', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0, color: Colors.black)),
+                  ),
+                  Container(
+                    height: 40.0,
+                    width: 40.0,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.black.withAlpha(50),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, size: 15.0, color: Colors.white),
+                      onPressed: () async {
+                        final targetDateTime = DateTime(_saveDateTime.year, (_saveDateTime.month - 1), _saveDateTime.day);
+                        final saveYM = DateFormat('yyyy-MM').format(targetDateTime);
+                        _loadMemo(saveYM);
+                        setState(() {
+                          _saveDateTime = targetDateTime;
+                          _saveYM = saveYM;
+                        });
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 10.0),
+                  Container(
+                    height: 40.0,
+                    width: 40.0,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.black.withAlpha(50),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_forward, size: 15.0, color: Colors.white),
+                      onPressed: () async {
+                        final targetDateTime = DateTime(_saveDateTime.year, (_saveDateTime.month + 1), _saveDateTime.day);
+                        final saveYM = DateFormat('yyyy-MM').format(targetDateTime);
+                        _loadMemo(saveYM);
+                        setState(() {
+                          _saveDateTime = targetDateTime;
+                          _saveYM = saveYM;
+                        });
+                      },
+                    ),
+                  )
                 ],
               ),
             ),
