@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:savek/component/main_header.dart';
 import 'package:savek/db/db_helper.dart';
 import 'package:savek/model/memo.dart';
 
@@ -11,8 +12,14 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  final _controller = TextEditingController();
+
+  // memo data
+  String _saveYM = '2025-04';
   List<Memo> _memoList = [];
+
+  // summary
+  int _sumAmount = 0;
+  
 
   @override
   void initState() {
@@ -23,8 +30,18 @@ class _MainScreenState extends State<MainScreen> {
   }
 
 	void _loadMemo() async {
+    int sumAmount = 0;
 		final memoList = await DBHelper.loadMemo();
+
+    List.generate(
+      memoList.length,
+      (i) {
+        sumAmount += memoList[i].amount;
+      }
+    );
+
 		setState(() {
+      _sumAmount = sumAmount;
 			_memoList = memoList;
 		});
 	}
@@ -93,7 +110,6 @@ class _MainScreenState extends State<MainScreen> {
                         if (picked != null) {
                           setState(() {
                             _selectedDate = picked.toString().substring(0, 10);
-														debugPrint(_selectedDate);
                           });
                         }
                       },
@@ -133,6 +149,7 @@ class _MainScreenState extends State<MainScreen> {
 													await DBHelper.insertMemo(Memo(date: _selectedDate, amount: int.parse(_amount.text), content: _content.text));
 												}
 												Navigator.pop(context);
+                        _loadMemo();
                       },
                       child: Text('SAVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18.0)),
                     ),
@@ -150,28 +167,32 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('test note')),
+      // appBar: AppBar(title: Text('test note')),
+      backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+            MainHeader(),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              alignment: Alignment.topRight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('lorem ipsum dolor sit amet'),
+                  SizedBox(height: 10.0),
+                  Text('\u20A9 ${NumberFormat('#,###').format(_sumAmount)}'),
+                ],
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              alignment: Alignment.centerLeft,
               child: Row(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(hintText: 'input memo')
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add),
-                    onPressed: () {
-                      debugPrint('check1');
-                    }
-                  )
+                  Text('${_saveYM} lorem ipsum', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0, color: Colors.black))
                 ],
-              )
+              ),
             ),
             Expanded(
               child: ListView.builder(

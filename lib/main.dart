@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
 				'/splash': (context) => const SplashScreen(),
 				'/main': (context) => const MainScreen(),
 			},
-			initialRoute: '/main'
+			initialRoute: '/splash'
     );
   }
 }

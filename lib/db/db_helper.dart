@@ -28,7 +28,12 @@ class DBHelper {
 
   static Future<List<Memo>> loadMemo() async {
     final db = await database();
-    final List<Map<String, dynamic>> maps = await db.query('memo', orderBy: 'date DESC');
+    final List<Map<String, dynamic>> maps = await db.query(
+      'memo',
+      // where: 'date LIKE ?',
+      // whereArgs: ['${saveYM}%'],
+      orderBy: 'date DESC'
+    );
     return List.generate(
       maps.length,
       (i) => Memo.fromMap(maps[i])
