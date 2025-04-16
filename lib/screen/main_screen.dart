@@ -20,7 +20,15 @@ class _MainScreenState extends State<MainScreen> {
 
   // summary
   int _sumAmount = 0;
-  
+  String _sumSentiment = 'sentiment_neutral';
+
+  final Map<String, Widget> _sentimentIcon = {
+    'sentiment_very_dissatisfied': Icon(Icons.sentiment_very_dissatisfied, size: 48, color: Colors.red),
+    'sentiment_dissatisfied': Icon(Icons.sentiment_dissatisfied, size: 48, color: Colors.red),
+    'sentiment_neutral': Icon(Icons.sentiment_neutral, size: 48, color: Colors.yellow),
+    'sentiment_satisfied': Icon(Icons.sentiment_satisfied, size: 48, color: Colors.green),
+    'sentiment_very_satisfied': Icon(Icons.sentiment_very_satisfied, size: 48, color: Colors.green),
+  };  
 
   @override
   void initState() {
@@ -48,6 +56,7 @@ class _MainScreenState extends State<MainScreen> {
 
 		final memoList = await DBHelper.loadMemo(searchYM);
     int sumAmount = 0;
+    String sumSentiment = 'sentiment_very_dissatisfied';
 
     List.generate(
       memoList.length,
@@ -56,7 +65,20 @@ class _MainScreenState extends State<MainScreen> {
       }
     );
 
+    if (sumAmount >= 600000) {
+      sumSentiment = 'sentiment_very_satisfied';
+    } else if (sumAmount >= 400000) {
+      sumSentiment = 'sentiment_satisfied';
+    } else if (sumAmount >= 200000) {
+      sumSentiment = 'sentiment_neutral';
+    } else if (sumAmount > 0) {
+      sumSentiment = 'sentiment_dissatisfied';
+    } else {
+      sumSentiment = 'sentiment_very_dissatisfied';
+    }
+
 		setState(() {
+      _sumSentiment = sumSentiment;
       _sumAmount = sumAmount;
 			_memoList = memoList;
 		});
@@ -180,6 +202,29 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
   
+  void _showDeleteConfirm(BuildContext context, VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('내역 삭제'),
+        content: Text('내역을 삭제합니다.'),
+        actions: [
+          TextButton(
+            child: Text('CANCEL'),
+            onPressed: () => Navigator.of(context).pop()
+          ),
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              onConfirm();
+            }
+          )
+        ],
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -188,16 +233,48 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(
           children: [
             MainHeader(),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              alignment: Alignment.topRight,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('lorem ipsum dolor sit amet'),
-                  SizedBox(height: 10.0),
-                  Text('\u20A9 ${NumberFormat('#,###').format(_sumAmount)}'),
-                ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                decoration: BoxDecoration(
+                  color: Colors.blueGrey[200],
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                alignment: Alignment.topRight,
+                child: Row(
+                  children: [
+                    Column(
+                      children: [
+                        _sentimentIcon[_sumSentiment] ?? SizedBox(),
+                      ],
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${int.parse(_saveYM.substring(5, 7))}월에 이만큼 절약했어요',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.normal,
+                            )
+                          ),
+                          SizedBox(height: 10.0),
+                          Text(
+                            '\u20A9 ${NumberFormat('#,###').format(_sumAmount)}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22.0,
+                              fontWeight: FontWeight.w900,
+                            )
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Container(
@@ -206,17 +283,17 @@ class _MainScreenState extends State<MainScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('${_saveYM} lorem ipsum', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0, color: Colors.black)),
+                    child: Text('${_saveYM}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0, color: Colors.black)),
                   ),
                   Container(
-                    height: 40.0,
-                    width: 40.0,
+                    width: 36.0,
+                    height: 36.0,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       color: Colors.black.withAlpha(50),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, size: 15.0, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back_ios_rounded, size: 15.0, color: Colors.white),
                       onPressed: () async {
                         final targetDateTime = DateTime(_saveDateTime.year, (_saveDateTime.month - 1), _saveDateTime.day);
                         final saveYM = DateFormat('yyyy-MM').format(targetDateTime);
@@ -230,14 +307,14 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   SizedBox(width: 10.0),
                   Container(
-                    height: 40.0,
-                    width: 40.0,
+                    width: 36.0,
+                    height: 36.0,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       color: Colors.black.withAlpha(50),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_forward, size: 15.0, color: Colors.white),
+                      icon: const Icon(Icons.arrow_forward_ios_rounded, size: 15.0, color: Colors.white),
                       onPressed: () async {
                         final targetDateTime = DateTime(_saveDateTime.year, (_saveDateTime.month + 1), _saveDateTime.day);
                         final saveYM = DateFormat('yyyy-MM').format(targetDateTime);
@@ -256,16 +333,67 @@ class _MainScreenState extends State<MainScreen> {
               child: ListView.builder(
                 itemCount: _memoList.length,
                 itemBuilder: (context, i) {
-                  return ListTile(
-                    title: Text('\u20A9 ${NumberFormat('#,###').format(_memoList[i].amount)} , ${_memoList[i].content}'),
-										subtitle: Text(_memoList[i].date),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        debugPrint('check222');
-                      }
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${_memoList[i].content}',
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 20.0,
+                                )
+                              ),
+                              SizedBox(height: 5.0),
+                              Text(
+                                '${_memoList[i].date}',
+                                style: TextStyle(
+                                  color: Colors.black54
+                                )
+                              )
+                            ],
+                          ),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.only(right: 10.0),
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '\u20A9 ${NumberFormat('#,###').format(_memoList[i].amount)}',
+                                style: TextStyle(
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                  letterSpacing: 0,
+                                ),
+                              ),
+                            )
+                          )
+                        ],
+                      ),
                     ),
                   );
+                  // return ListTile(
+                  //   title: Text('\u20A9 ${NumberFormat('#,###').format(_memoList[i].amount)} , ${_memoList[i].content}'),
+									// 	subtitle: Text(_memoList[i].date),
+                  //   trailing: IconButton(
+                  //     icon: Icon(Icons.delete),
+                  //     onPressed: () {
+                  //       _showDeleteConfirm(context, () async {
+                  //         await DBHelper.deleteMemo(_memoList[i].id ?? -1);
+                  //         _loadMemo();
+                  //       });
+                  //     }
+                  //   ),
+                  // );
                 }
               ),
             )

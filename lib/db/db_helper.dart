@@ -41,4 +41,11 @@ class DBHelper {
       (i) => Memo.fromMap(maps[i])
     );
   }
+
+  static Future<void> deleteMemo(int id) async {
+    if (id < 0) return;
+    
+    final db = await database();
+    await db.delete('memo', where: 'id = ?', whereArgs: [id]);
+  }
 }
