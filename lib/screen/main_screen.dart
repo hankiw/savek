@@ -106,6 +106,7 @@ class _MainScreenState extends State<MainScreen> {
     final _amount = TextEditingController();
 		final _content = TextEditingController();
     String _selectedDate = '';
+    String _alertMessage = '';
 
     showModalBottomSheet(
       backgroundColor: Colors.white,
@@ -139,7 +140,6 @@ class _MainScreenState extends State<MainScreen> {
                         )
                       ),
                     ),
-                    Text('new memo', style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10.0),
 										TextButton.icon(
                       style: TextButton.styleFrom(
@@ -191,6 +191,10 @@ class _MainScreenState extends State<MainScreen> {
                         contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                       )
                     ),
+                    Container(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(_alertMessage, style: TextStyle(color: Colors.red[600])),
+                    ),
                     SizedBox(height: 20.0),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -203,11 +207,19 @@ class _MainScreenState extends State<MainScreen> {
                       onPressed: () async {
                         if (_selectedDate != '' && _amount.text.isNotEmpty && _content.text.isNotEmpty) {
 													await DBHelper.insertMemo(Memo(date: _selectedDate, amount: int.parse(_amount.text), content: _content.text));
-												}
-												Navigator.pop(context);
-                        _loadMemo();
+                          Navigator.pop(context);
+                          _loadMemo();
+												} else {
+                          if (_selectedDate == '') {
+                            setState(() { _alertMessage = '날짜를 입력하세요.'; });
+                          } else if (_amount.text.isEmpty) {
+                            setState(() { _alertMessage = '금액을 입력하세요.'; });
+                          } else if (_content.text.isEmpty) {
+                            setState(() { _alertMessage = '내용을 입력하세요.'; });
+                          }
+                        }
                       },
-                      child: Text('SAVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18.0)),
+                      child: Text('절약 추가하기 ✨', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18.0)),
                     ),
                     SizedBox(height: 10.0),
                   ],
@@ -435,11 +447,11 @@ class _MainScreenState extends State<MainScreen> {
               ),
             ),
 						Container(
-							height: 60.0,
+							height: 80.0,
 							child: AdWidget(
                 ad: _bannerAd!
               ),
-						)
+						),
 					],
         ),
       ),
