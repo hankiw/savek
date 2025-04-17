@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
+import 'package:savek/ad_mob_service.dart';
 import 'package:savek/component/main_header.dart';
 import 'package:savek/db/db_helper.dart';
 import 'package:savek/model/memo.dart';
@@ -12,6 +14,9 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+
+  // google admob
+  BannerAd? _bannerAd;
 
   // memo data
   DateTime _saveDateTime = DateTime.now();
@@ -35,6 +40,9 @@ class _MainScreenState extends State<MainScreen> {
     // TODO: implement initState
     super.initState();
 
+    // google admob init
+    _createBannerAd();
+
     _init();
   }
 
@@ -46,6 +54,16 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _saveYM = saveYM;
     });
+  }
+
+  void _createBannerAd() {
+    _bannerAd = BannerAd(
+      size: AdSize.fullBanner,
+      adUnitId: AdMobService.bannerAdUnitID!,
+      listener: AdMobService.bannerAdListener,
+      request: const AdRequest(),
+    )
+      ..load();
   }
 
 	void _loadMemo([String searchYM = '']) async {
@@ -206,15 +224,34 @@ class _MainScreenState extends State<MainScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('내역 삭제'),
-        content: Text('내역을 삭제합니다.'),
+				backgroundColor: Colors.white,
+        title: Text('노트 삭제'),
+        content: Text('티끌모아 태산이라니까요.. 😢'),
         actions: [
-          TextButton(
-            child: Text('CANCEL'),
+          ElevatedButton(
+						style: ElevatedButton.styleFrom(
+							backgroundColor: Colors.white,
+							foregroundColor: Colors.black87,
+							shape: RoundedRectangleBorder(
+								borderRadius: BorderRadius.circular(30),
+							),
+							side: BorderSide(color: Colors.grey.shade300),
+							elevation: 0,
+						),
+            child: Text('취소', style: TextStyle(color: Colors.black)),
             onPressed: () => Navigator.of(context).pop()
           ),
-          TextButton(
-            child: Text('OK'),
+          ElevatedButton(
+						style: ElevatedButton.styleFrom(
+							backgroundColor: Colors.white,
+							foregroundColor: Colors.black87,
+							shape: RoundedRectangleBorder(
+								borderRadius: BorderRadius.circular(30),
+							),
+							side: BorderSide(color: Colors.grey.shade300),
+							elevation: 0,
+						),
+            child: Text('삭제'),
             onPressed: () {
               Navigator.of(context).pop();
               onConfirm();
@@ -376,34 +413,45 @@ class _MainScreenState extends State<MainScreen> {
                                 ),
                               ),
                             )
-                          )
+                          ),
+													Container(
+														alignment: Alignment.centerRight,
+														child: IconButton(
+															iconSize: 18.0,
+															icon: Icon(Icons.delete),
+															onPressed: () {
+																_showDeleteConfirm(context, () async {
+																	await DBHelper.deleteMemo(_memoList[i].id ?? -1);
+																	_loadMemo();
+																});
+															}
+														),
+													)
                         ],
                       ),
                     ),
                   );
-                  // return ListTile(
-                  //   title: Text('\u20A9 ${NumberFormat('#,###').format(_memoList[i].amount)} , ${_memoList[i].content}'),
-									// 	subtitle: Text(_memoList[i].date),
-                  //   trailing: IconButton(
-                  //     icon: Icon(Icons.delete),
-                  //     onPressed: () {
-                  //       _showDeleteConfirm(context, () async {
-                  //         await DBHelper.deleteMemo(_memoList[i].id ?? -1);
-                  //         _loadMemo();
-                  //       });
-                  //     }
-                  //   ),
-                  // );
                 }
               ),
-            )
-          ],
+            ),
+						Container(
+							height: 60.0,
+							child: AdWidget(
+                ad: _bannerAd!
+              ),
+						)
+					],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showBottomSheet,
-        child: Icon(Icons.add),
-      )
+				// label: Text('메모 추가', style: TextStyle(color: Colors.white)),
+				// icon: Icon(Icons.edit_note_rounded, color: Colors.white),
+				backgroundColor: Colors.blue.shade800,
+				shape: StadiumBorder(),
+        child: Icon(Icons.edit_note_rounded, color: Colors.white, size: 32.0),
+      ),
+			floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

@@ -26,8 +26,8 @@ class MainHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_sentence[randomIndex], style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold, color: Colors.white)),
-              Text('절약노트', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(_sentence[randomIndex], style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('절약노트', style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold, color: Colors.white)),
             ],
           ),
           // Row(
